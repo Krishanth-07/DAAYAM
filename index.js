@@ -18,6 +18,8 @@ const app = express();
 const PORT = process.env.PORT || 3000;
 const DATA_DIR = path.join(__dirname, "data");
 const DATA_FILE = path.join(DATA_DIR, "store.json");
+const IS_SERVERLESS = Boolean(process.env.VERCEL || process.env.AWS_LAMBDA_FUNCTION_NAME);
+const STORAGE_MODE = process.env.STORAGE_MODE || (IS_SERVERLESS ? "memory" : "file");
 const AUTH_REQUIRED = process.env.AUTH_REQUIRED === "true";
 const ROLE_KEYS = {
   admin: process.env.ADMIN_KEY || "daayam-admin-demo",
@@ -59,6 +61,10 @@ function ensureDataDir() {
 }
 
 async function persistState() {
+  if (STORAGE_MODE === "memory") {
+    return;
+  }
+
   await ensureDataDir();
   const payload = {
     schemaVersion: 2,
@@ -75,6 +81,10 @@ async function persistState() {
 }
 
 async function loadState() {
+  if (STORAGE_MODE === "memory") {
+    return false;
+  }
+
   try {
     await fs.promises.access(DATA_FILE, fs.constants.F_OK);
   } catch (_error) {
@@ -359,6 +369,17 @@ const asyncHandler = (handler) => (req, res, next) => {
 
 app.use(express.json({ limit: "200kb" }));
 app.use(express.static(path.join(__dirname, "public")));
+
+let stateReadyPromise = Promise.resolve();
+
+app.use(async (req, res, next) => {
+  try {
+    await stateReadyPromise;
+    next();
+  } catch (error) {
+    next(error);
+  }
+});
 
 app.get(
   "/assets",
@@ -645,17 +666,26 @@ async function initializeState() {
   }
 }
 
-initializeState()
-  .then(() => {
-    server.listen(PORT, () => {
-      console.log(`DAAYAM server running on http://localhost:${PORT}`);
-      if (AUTH_REQUIRED) {
-        console.log("Authentication mode: ON (x-daayam-role + x-daayam-key required)");
-      }
+stateReadyPromise = initializeState();
+
+if (require.main === module) {
+  stateReadyPromise
+    .then(() => {
+      server.listen(PORT, () => {
+        console.log(`DAAYAM server running on http://localhost:${PORT}`);
+        if (AUTH_REQUIRED) {
+          console.log("Authentication mode: ON (x-daayam-role + x-daayam-key required)");
+        }
+        if (STORAGE_MODE === "memory") {
+          console.log("Storage mode: memory (non-persistent)");
+        }
+      });
+    })
+    .catch((error) => {
+      console.error("Failed to initialize application state.");
+      console.error(error.message);
+      process.exit(1);
     });
-  })
-  .catch((error) => {
-    console.error("Failed to initialize application state.");
-    console.error(error.message);
-    process.exit(1);
-  });
+}
+
+module.exports = app;
