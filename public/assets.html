@@ -1,0 +1,72 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>DAAYAM Assets</title>
+    <link rel="icon" type="image/png" href="/DAAYAM_LOGO.png" />
+    <link rel="stylesheet" href="theme.css" />
+  </head>
+  <body>
+    <div class="page-shell">
+      <nav class="top-nav">
+        <a class="brand-lockup" href="/">
+          <img class="brand-logo" src="/DAAYAM_LOGO.png" alt="DAAYAM logo" />
+          <span class="brand-copy">
+            <strong class="brand-title">DAAYAM</strong>
+            <small>Family Financial Readiness Platform</small>
+          </span>
+        </a>
+        <div class="nav-links">
+          <a class="nav-link" href="/">Home</a>
+          <a class="nav-link" href="/dashboard.html">Dashboard</a>
+          <a class="nav-link active" href="/assets.html">Assets</a>
+          <a class="nav-link" href="/nominees.html">Nominees</a>
+          <a class="nav-link" href="/grief.html">Grief Mode</a>
+        </div>
+      </nav>
+
+      <header class="page-header">
+        <div>
+          <p class="eyebrow">Setup</p>
+          <h1>Add and review assets</h1>
+          <p class="hero-copy">Map bank accounts, loans, insurance, subscriptions, and UPI-linked mandates.</p>
+        </div>
+      </header>
+
+      <main class="two-col">
+        <section class="panel">
+          <p class="kicker">New asset</p>
+          <h2>Save to protected vault</h2>
+          <form id="assetForm" class="form-grid">
+            <label>Asset Type<select id="assetType" required><option value="">Select type</option><option value="bank">Bank Account</option><option value="loan">Loan</option><option value="insurance">Insurance</option><option value="subscription">Subscription</option></select></label>
+            <label>Asset Name<input id="assetName" type="text" placeholder="Savings Account, Life Cover" /></label>
+            <label>Provider / Institution<input id="assetProvider" type="text" placeholder="HDFC Bank, LIC, PhonePe" required /></label>
+            <label>Approximate Value<input id="assetValue" type="text" placeholder="Rs 8,50,000 or Rs 999/month" /></label>
+            <label>UPI App / Source<input id="assetUpiApp" type="text" placeholder="Google Pay, Paytm, PhonePe" /></label>
+            <label>Linked Nominee<select id="assetNominee"><option value="">No nominee linked yet</option></select></label>
+            <label>Status<select id="assetStatus"><option value="active">Active</option><option value="review">Needs Review</option><option value="archived">Archived</option></select></label>
+            <label class="full-span">Notes<textarea id="assetNotes" rows="3" placeholder="Branch, policy, or account notes"></textarea></label>
+            <label class="checkbox-field full-span"><input id="assetAutoDebit" type="checkbox" /><span>This item has active auto-debit or UPI mandate</span></label>
+            <button type="submit" class="primary-btn full-span">Save Asset</button>
+          </form>
+        </section>
+
+        <section class="panel">
+          <div class="section-title split">
+            <div>
+              <p class="kicker">Saved assets</p>
+              <h2>Mapped items</h2>
+            </div>
+            <div class="metric-card compact-metric"><span id="assetCount">0</span><small>Assets</small></div>
+          </div>
+          <div id="assetList" class="card-list"></div>
+        </section>
+      </main>
+
+      <div id="toast" class="toast"></div>
+    </div>
+
+    <script src="assets.js"></script>
+  </body>
+</html>

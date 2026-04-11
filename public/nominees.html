@@ -1,0 +1,68 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>DAAYAM Nominees</title>
+    <link rel="icon" type="image/png" href="/DAAYAM_LOGO.png" />
+    <link rel="stylesheet" href="theme.css" />
+  </head>
+  <body>
+    <div class="page-shell">
+      <nav class="top-nav">
+        <a class="brand-lockup" href="/">
+          <img class="brand-logo" src="/DAAYAM_LOGO.png" alt="DAAYAM logo" />
+          <span class="brand-copy">
+            <strong class="brand-title">DAAYAM</strong>
+            <small>Family Financial Readiness Platform</small>
+          </span>
+        </a>
+        <div class="nav-links">
+          <a class="nav-link" href="/">Home</a>
+          <a class="nav-link" href="/dashboard.html">Dashboard</a>
+          <a class="nav-link" href="/assets.html">Assets</a>
+          <a class="nav-link active" href="/nominees.html">Nominees</a>
+          <a class="nav-link" href="/grief.html">Grief Mode</a>
+        </div>
+      </nav>
+
+      <header class="page-header">
+        <div>
+          <p class="eyebrow">Setup</p>
+          <h1>Add and verify nominees</h1>
+          <p class="hero-copy">Register family members and approve them for protected access.</p>
+        </div>
+      </header>
+
+      <main class="two-col">
+        <section class="panel">
+          <p class="kicker">New nominee</p>
+          <h2>Add family member</h2>
+          <form id="nomineeForm" class="form-grid">
+            <label>Full Name<input id="nomineeName" type="text" placeholder="Priya Sharma" required /></label>
+            <label>Contact<input id="nomineeContact" type="text" placeholder="+91 98xxxxxx or email" required /></label>
+            <label>Relationship<input id="nomineeRelation" type="text" placeholder="Spouse, Parent, Sibling" required /></label>
+            <label>ID Type<select id="nomineeIdType" required><option value="">Select ID type</option><option value="Aadhaar">Aadhaar</option><option value="PAN">PAN</option><option value="Passport">Passport</option><option value="Driver License">Driver License</option></select></label>
+            <label class="full-span">ID Number<input id="nomineeIdNumber" type="text" placeholder="Enter masked or demo ID number" required /></label>
+            <button type="submit" class="secondary-btn full-span">Save Nominee</button>
+          </form>
+        </section>
+
+        <section class="panel">
+          <div class="section-title split">
+            <div>
+              <p class="kicker">Verification</p>
+              <h2>Approved family members</h2>
+            </div>
+            <div class="metric-card compact-metric"><span id="nomineeCount">0</span><small>Nominees</small></div>
+          </div>
+          <div id="nomineeList" class="card-list"></div>
+        </section>
+      </main>
+
+      <div id="toast" class="toast"></div>
+    </div>
+
+    <script src="nominees.js"></script>
+  </body>
+</html>

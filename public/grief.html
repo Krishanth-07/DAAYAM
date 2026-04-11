@@ -1,0 +1,118 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>DAAYAM Grief Mode</title>
+    <link rel="icon" type="image/png" href="/DAAYAM_LOGO.png" />
+    <link rel="stylesheet" href="theme.css" />
+  </head>
+  <body>
+    <div class="page-shell">
+      <nav class="top-nav">
+        <a class="brand-lockup" href="/">
+          <img class="brand-logo" src="/DAAYAM_LOGO.png" alt="DAAYAM logo" />
+          <span class="brand-copy">
+            <strong class="brand-title">DAAYAM</strong>
+            <small>Family Financial Readiness Platform</small>
+          </span>
+        </a>
+        <div class="nav-links">
+          <a class="nav-link" href="/">Home</a>
+          <a class="nav-link" href="/dashboard.html">Dashboard</a>
+          <a class="nav-link" href="/assets.html">Assets</a>
+          <a class="nav-link" href="/nominees.html">Nominees</a>
+          <a class="nav-link active" href="/grief.html">Grief Mode</a>
+        </div>
+      </nav>
+
+      <header class="page-header grief-header">
+        <div>
+          <p class="eyebrow warning">Family Flow</p>
+          <h1>Simple steps for a family member</h1>
+          <p class="hero-copy">Verify the event, unlock approved access, and follow the financial first aid kit.</p>
+        </div>
+      </header>
+
+      <main class="stack-layout">
+        <section class="panel">
+          <div class="overview-grid">
+            <div class="spot-card">
+              <small>Step 1</small>
+              <strong>Verify the event</strong>
+              <p>Confirm death or disability before protected access is released.</p>
+            </div>
+            <div class="spot-card">
+              <small>Step 2</small>
+              <strong>See who is approved</strong>
+              <p>Only verified family members should appear in the access list.</p>
+            </div>
+            <div class="spot-card">
+              <small>Step 3</small>
+              <strong>Follow the first aid kit</strong>
+              <p>DAAYAM lists exactly what to claim, cancel, and transfer.</p>
+            </div>
+          </div>
+        </section>
+
+        <section class="panel">
+          <p class="kicker">Step 1</p>
+          <h2>Verify death or disability</h2>
+          <div class="form-grid certificate-grid">
+            <label>
+              Certificate Number
+              <input id="certificateNumber" type="text" placeholder="Enter death or disability certificate number" />
+            </label>
+            <label>
+              Issuing Authority
+              <input id="certificateIssuer" type="text" placeholder="Hospital, municipal office, or government authority" />
+            </label>
+          </div>
+          <div class="flow-actions">
+            <select id="triggerType" class="trigger-select">
+              <option value="death">Death</option>
+              <option value="disability">Disability</option>
+            </select>
+            <button id="verifyEmergencyBtn" class="secondary-btn">Verify Event</button>
+            <button id="emergencyBtn" class="danger-btn" disabled>Generate First Aid Kit</button>
+          </div>
+          <div class="release-status-grid">
+            <div class="status-box"><small>Vault status</small><strong id="vaultStatus">Protected</strong></div>
+            <div class="status-box"><small>Approved family</small><strong id="familyCount">0</strong></div>
+            <div class="status-box"><small>Immediate risks</small><strong id="riskCount">0</strong></div>
+          </div>
+          <p id="releaseSummary" class="support-text">Vault remains protected until death or disability is verified.</p>
+        </section>
+
+        <section class="panel">
+          <div class="section-title split">
+            <div>
+              <p class="kicker">Access</p>
+              <h2>Who can view the vault</h2>
+            </div>
+            <div class="metric-row">
+              <div class="metric-card compact-metric"><span id="readinessScore">0%</span><small>Protection</small></div>
+              <div class="metric-card compact-metric"><span id="assetCount">0</span><small>Assets</small></div>
+              <div class="metric-card compact-metric"><span id="nomineeCount">0</span><small>Nominees</small></div>
+              <div class="metric-card compact-metric"><span id="verifiedCount">0</span><small>Verified</small></div>
+              <div class="metric-card compact-metric"><span id="autoDebitCount">0</span><small>Auto-debits</small></div>
+            </div>
+          </div>
+          <div id="familyAccessList" class="family-access-list"></div>
+          <div id="insightGrid" class="mini-grid"></div>
+        </section>
+
+        <section id="firstAidKitSection" class="panel emergency-panel">
+          <p class="kicker warning">Step 2</p>
+          <h2>Financial First Aid Kit</h2>
+          <p id="checklistMessage" class="support-text">Generate the checklist to show next steps.</p>
+          <div id="checklist" class="checklist-grid"></div>
+        </section>
+      </main>
+
+      <div id="toast" class="toast"></div>
+    </div>
+
+    <script src="grief.js"></script>
+  </body>
+</html>
