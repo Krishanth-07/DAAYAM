@@ -12,12 +12,17 @@ const {
   buildInsights,
   buildChecklist,
   buildFamilyAccessState,
+  buildRecoveryAssistant,
 } = require("./lib/domain");
 
 const app = express();
 const PORT = process.env.PORT || 3000;
 const DATA_DIR = path.join(__dirname, "data");
 const DATA_FILE = path.join(DATA_DIR, "store.json");
+const DIST_DIR = path.join(__dirname, "dist");
+const PUBLIC_DIR = path.join(__dirname, "public");
+const DIST_INDEX_FILE = path.join(DIST_DIR, "index.html");
+const PUBLIC_INDEX_FILE = path.join(PUBLIC_DIR, "index.html");
 const IS_SERVERLESS = Boolean(process.env.VERCEL || process.env.AWS_LAMBDA_FUNCTION_NAME);
 const STORAGE_MODE = process.env.STORAGE_MODE || (IS_SERVERLESS ? "memory" : "file");
 const AUTH_REQUIRED = process.env.AUTH_REQUIRED === "true";
@@ -43,6 +48,9 @@ let emergencyVerification = { ...defaultEmergencyVerification };
 
 const nomineeIdTypes = new Set(["Aadhaar", "PAN", "Passport", "Driver License"]);
 const assetStatuses = new Set(["active", "review", "archived"]);
+const emergencyOtpSessions = new Map();
+const OTP_TTL_MS = 10 * 60 * 1000;
+const OTP_MAX_ATTEMPTS = 5;
 
 function createId() {
   return `${Date.now()}-${Math.floor(Math.random() * 100000)}`;
@@ -54,6 +62,19 @@ function replaceList(target, source) {
 
 function normalizeString(value, maxLength) {
   return String(value || "").trim().slice(0, maxLength);
+}
+
+function createOtpCode() {
+  return String(Math.floor(100000 + Math.random() * 900000));
+}
+
+function purgeExpiredOtpSessions() {
+  const now = Date.now();
+  emergencyOtpSessions.forEach((session, sessionId) => {
+    if (session.expiresAt <= now) {
+      emergencyOtpSessions.delete(sessionId);
+    }
+  });
 }
 
 function ensureDataDir() {
@@ -368,7 +389,8 @@ const asyncHandler = (handler) => (req, res, next) => {
 };
 
 app.use(express.json({ limit: "200kb" }));
-app.use(express.static(path.join(__dirname, "public")));
+app.use(express.static(DIST_DIR));
+app.use(express.static(PUBLIC_DIR));
 
 let stateReadyPromise = Promise.resolve();
 
@@ -569,15 +591,171 @@ app.post(
 );
 
 app.post(
+  "/request-emergency-otp",
+  requireRole(["admin", "family"]),
+  asyncHandler(async (req, res) => {
+    purgeExpiredOtpSessions();
+
+    const contact = normalizeString(req.body.contact, 120);
+    const triggerType = req.body.triggerType === "disability" ? "disability" : "death";
+
+    if (contact.length < 3) {
+      return res.status(400).json({ message: "Contact is required to send OTP." });
+    }
+
+    const otpSessionId = createId();
+    const otpCode = createOtpCode();
+    const expiresAt = Date.now() + OTP_TTL_MS;
+
+    emergencyOtpSessions.set(otpSessionId, {
+      id: otpSessionId,
+      otpCode,
+      contact,
+      triggerType,
+      createdAt: Date.now(),
+      expiresAt,
+      attempts: 0,
+      verified: false,
+      verifiedAt: 0,
+    });
+
+    recordAudit(
+      "emergency.otp.requested",
+      {
+        triggerType,
+        contact: maskId(contact),
+      },
+      req
+    );
+
+    return res.json({
+      message: "Dummy OTP generated for demo flow.",
+      otpSessionId,
+      demoOtp: otpCode,
+      expiresAt: new Date(expiresAt).toISOString(),
+    });
+  })
+);
+
+app.post(
+  "/verify-emergency-otp",
+  requireRole(["admin", "family"]),
+  asyncHandler(async (req, res) => {
+    purgeExpiredOtpSessions();
+
+    const otpSessionId = normalizeString(req.body.otpSessionId, 80);
+    const otp = normalizeString(req.body.otp, 10);
+    const session = emergencyOtpSessions.get(otpSessionId);
+
+    if (!session) {
+      return res.status(400).json({ message: "OTP session expired or not found." });
+    }
+
+    if (session.expiresAt <= Date.now()) {
+      emergencyOtpSessions.delete(otpSessionId);
+      return res.status(400).json({ message: "OTP expired. Request a new code." });
+    }
+
+    if (session.attempts >= OTP_MAX_ATTEMPTS) {
+      emergencyOtpSessions.delete(otpSessionId);
+      return res.status(400).json({ message: "Too many OTP attempts. Request a new code." });
+    }
+
+    session.attempts += 1;
+
+    if (session.otpCode !== otp) {
+      return res.status(400).json({ message: "Invalid OTP. Please try again." });
+    }
+
+    session.verified = true;
+    session.verifiedAt = Date.now();
+
+    recordAudit(
+      "emergency.otp.verified",
+      {
+        triggerType: session.triggerType,
+        attempts: session.attempts,
+      },
+      req
+    );
+
+    return res.json({
+      verified: true,
+      otpSessionId,
+      message: "OTP verified. You can now complete certificate verification.",
+    });
+  })
+);
+
+app.post(
+  "/recovery-assistant",
+  requireRole(["admin", "family"]),
+  asyncHandler(async (req, res) => {
+    const triggerType = req.body.triggerType === "disability" ? "disability" : "death";
+
+    if (!emergencyVerification.verified || emergencyVerification.triggerType !== triggerType) {
+      return res.status(400).json({
+        message:
+          "Verify the event first. Recovery assistant can be generated only after certificate verification.",
+      });
+    }
+
+    const recoveryAssistant = buildRecoveryAssistant({
+      triggerType,
+      assets,
+      nominees,
+      emergencyVerification,
+      claimantName: normalizeString(req.body.claimantName, 80),
+      claimantRelation: normalizeString(req.body.claimantRelation, 50),
+      language: normalizeString(req.body.language, 10),
+    });
+
+    recordAudit(
+      "recovery.assistant.generated",
+      {
+        triggerType,
+        language: recoveryAssistant.language,
+        tasks: recoveryAssistant.tasks.length,
+        letters: recoveryAssistant.letters.length,
+      },
+      req
+    );
+    await persistState();
+
+    return res.json({
+      message: "AI Recovery Assistant plan generated.",
+      recoveryAssistant,
+    });
+  })
+);
+
+app.post(
   "/verify-emergency",
   requireRole(["admin", "family"]),
   asyncHandler(async (req, res) => {
+    purgeExpiredOtpSessions();
+
+    const otpSessionId = normalizeString(req.body.otpSessionId, 80);
+    const otpSession = emergencyOtpSessions.get(otpSessionId);
+
+    if (!otpSession || !otpSession.verified || otpSession.expiresAt <= Date.now()) {
+      return res.status(400).json({
+        message: "OTP verification is required before certificate verification.",
+      });
+    }
+
     const result = validateEmergencyPayload(req.body || {});
     if (result.error) {
       return res.status(400).json({ message: result.error });
     }
 
     const { triggerType, certificateNumber, issuer, certificateType } = result.payload;
+
+    if (otpSession.triggerType !== triggerType) {
+      return res.status(400).json({
+        message: "OTP was requested for a different trigger type. Request OTP again.",
+      });
+    }
 
     emergencyVerification = {
       verified: true,
@@ -598,6 +776,8 @@ app.post(
       },
       req
     );
+
+    emergencyOtpSessions.delete(otpSessionId);
     await persistState();
 
     return res.json({
@@ -626,7 +806,11 @@ app.get("/health", (req, res) => {
 });
 
 app.get("*", (req, res) => {
-  res.sendFile(path.join(__dirname, "public", "index.html"));
+  if (fs.existsSync(DIST_INDEX_FILE)) {
+    return res.sendFile(DIST_INDEX_FILE);
+  }
+
+  return res.sendFile(PUBLIC_INDEX_FILE);
 });
 
 app.use((error, req, res, _next) => {

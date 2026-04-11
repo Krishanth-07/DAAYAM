@@ -8,6 +8,7 @@ const {
   calculateReadiness,
   buildChecklist,
   buildFamilyAccessState,
+  buildRecoveryAssistant,
 } = require("../lib/domain");
 
 test("sanitizeType accepts known types only", () => {
@@ -82,4 +83,46 @@ test("buildFamilyAccessState uses pluralization correctly", () => {
 
   assert.match(single.releaseSummary, /1 verified family member\.$/);
   assert.match(plural.releaseSummary, /2 verified family members\.$/);
+});
+
+test("buildRecoveryAssistant builds tasks and letters in selected language", () => {
+  const data = buildRecoveryAssistant({
+    triggerType: "death",
+    assets: [
+      { type: "insurance", provider: "LIC", name: "Term Cover" },
+      { type: "subscription", provider: "Google Pay", name: "UPI Mandates" },
+    ],
+    nominees: [{ name: "Meera", relation: "Spouse", verificationStatus: "verified" }],
+    emergencyVerification: {
+      verifiedAt: "2026-04-10T10:00:00.000Z",
+      certificateType: "Death Certificate",
+      certificateNumber: "ABCD-1001",
+    },
+    claimantName: "Meera",
+    claimantRelation: "Spouse",
+    language: "hi",
+  });
+
+  assert.equal(data.language, "hi");
+  assert.equal(data.claimant.name, "Meera");
+  assert.ok(data.tasks.length >= 3);
+  assert.equal(data.letters.length, 2);
+  assert.match(data.letters[0].body, /प्राप्तकर्ता/);
+});
+
+test("buildRecoveryAssistant falls back to english for unknown language", () => {
+  const data = buildRecoveryAssistant({
+    triggerType: "disability",
+    assets: [{ type: "loan", provider: "SBI" }],
+    nominees: [],
+    emergencyVerification: {
+      verifiedAt: "2026-04-10T10:00:00.000Z",
+      certificateType: "Disability Certificate",
+      certificateNumber: "CERT-99",
+    },
+    language: "xx",
+  });
+
+  assert.equal(data.language, "en");
+  assert.match(data.summary, /Action plan generated/);
 });

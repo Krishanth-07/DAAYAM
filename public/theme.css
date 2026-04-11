@@ -573,6 +573,24 @@ button:disabled {
   margin-bottom: var(--space-2);
 }
 
+.recovery-grid {
+  align-items: end;
+}
+
+.assistant-action-wrap {
+  display: flex;
+  align-items: end;
+}
+
+.assistant-summary {
+  margin-top: var(--space-2);
+  padding: var(--space-2);
+  border-radius: 14px;
+  border: 1px solid var(--border);
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.96), rgba(247, 244, 252, 0.98));
+  font-weight: 600;
+}
+
 .checkbox-field {
   display: flex;
   align-items: center;
@@ -605,6 +623,44 @@ button:disabled {
   background:
     linear-gradient(180deg, rgba(241, 184, 102, 0.1), rgba(255, 255, 255, 0.96)),
     linear-gradient(180deg, rgba(255, 255, 255, 0.96), rgba(246, 242, 251, 0.96));
+}
+
+.letter-card {
+  margin-top: var(--space-2);
+  padding: var(--space-2);
+  border-radius: 18px;
+  border: 1px solid var(--border);
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.97), rgba(247, 244, 252, 0.94));
+}
+
+.letter-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: start;
+  gap: var(--space-2);
+}
+
+.letter-action-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  justify-content: flex-end;
+}
+
+.copy-letter-btn {
+  white-space: nowrap;
+}
+
+.letter-body {
+  margin: var(--space-2) 0 0;
+  padding: var(--space-2);
+  border-radius: 14px;
+  border: 1px solid var(--border);
+  background: rgba(255, 255, 255, 0.94);
+  color: var(--text);
+  white-space: pre-wrap;
+  font-family: "Manrope", "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
+  line-height: 1.5;
 }
 
 .check-item::before {
@@ -822,6 +878,7 @@ textarea:focus-visible {
   .split,
   .asset-head,
   .nominee-head,
+  .letter-head,
   .hero-simple {
     flex-direction: column;
     align-items: stretch;
